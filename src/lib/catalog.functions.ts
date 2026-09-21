@@ -63,7 +63,7 @@ const setupSchema = z.object({
  * Closes itself permanently once an owner exists.
  */
 export const setupOwner = createServerFn({ method: "POST" })
-  .inputValidator((data) => setupSchema.parse(data))
+  .validator((data) => setupSchema.parse(data))
   .handler(async ({ data }) => {
     if (await ownerExists()) {
       throw new Error("An owner account already exists on this shop");
@@ -113,7 +113,7 @@ export const offerInput = z.object({
 /** Publish a new offer. This is what makes it pop up for visitors. */
 export const createOffer = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data) => offerInput.parse(data))
+  .validator((data) => offerInput.parse(data))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = requireAuth(context);
     await assertOwner(supabase, userId);
@@ -170,7 +170,7 @@ const publishedSchema = z.object({
 /** Show or hide an offer on the home screen without deleting it. */
 export const setOfferPublished = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data) => publishedSchema.parse(data))
+  .validator((data) => publishedSchema.parse(data))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = requireAuth(context);
     await assertOwner(supabase, userId);
@@ -186,7 +186,7 @@ const deleteSchema = z.object({ id: z.string().uuid() });
 
 export const deleteOffer = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data) => deleteSchema.parse(data))
+  .validator((data) => deleteSchema.parse(data))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = requireAuth(context);
     await assertOwner(supabase, userId);
