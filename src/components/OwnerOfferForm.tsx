@@ -58,6 +58,44 @@ export function OwnerOfferForm({
 
   const scope = SCOPES.find((item) => item.id === appliesTo);
 
+  async function pickPhoto(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("That file isn't a photo");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Photos need to be under 5MB");
+      return;
+    }
+
+    setPhotoBusy(true);
+    try {
+      const ext = (file.name.split(".").pop() ?? "jpg").toLowerCase();
+      const path = `${crypto.randomUUID()}.${ext}`;
+      const { error } = await supabase.storage
+        .from("offer-photos")
+        .upload(path, file, { cacheControl: "3600", upsert: false });
+      if (error) throw error;
+
+      setImageUrl(`storage://offer-photos/${path}`);
+      const signed = await supabase.storage
+        .from("offer-photos")
+        .createSignedUrl(path, 600);
+      setPreview(signed.data?.signedUrl ?? null);
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Could not attach that photo",
+      );
+      setImageUrl("");
+      setPreview(null);
+    } finally {
+      setPhotoBusy(false);
+    }
+  }
+
   async function submit(event: React.FormEvent) {
     event.preventDefault();
     if (appliesTo === "category" && categoryIds.length === 0) {
@@ -87,6 +125,7 @@ export function OwnerOfferForm({
       setHeadline("");
       setDescription("");
       setImageUrl("");
+      setPreview(null);
       onCreated();
     } catch (error) {
       toast.error(
