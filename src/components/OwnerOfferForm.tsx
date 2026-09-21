@@ -1,8 +1,9 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { ImagePlus, Loader2, Plus, Tag } from "lucide-react";
+import { ImagePlus, Loader2, Plus, Tag, X } from "lucide-react";
 import { toast } from "sonner";
 
+import { supabase } from "@/integrations/supabase/client";
 import { createOffer, type offerInput } from "@/lib/catalog.functions";
 import { accentClasses, type CategoryRow, type ProductRow } from "@/lib/pricing";
 
@@ -41,6 +42,9 @@ export function OwnerOfferForm({
   const [categoryIds, setCategoryIds] = useState<string[]>([]);
   const [productIds, setProductIds] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
+  const [photoBusy, setPhotoBusy] = useState(false);
+  const [preview, setPreview] = useState<string | null>(null);
+  const photoInput = useRef<HTMLInputElement>(null);
 
   const coveredCount = useMemo(() => {
     if (appliesTo === "all") return products.length;
