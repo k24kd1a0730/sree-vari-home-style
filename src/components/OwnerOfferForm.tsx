@@ -299,19 +299,50 @@ export function OwnerOfferForm({
         </div>
       </div>
 
-      <label className="mt-4 block">
-        <span className={labelClass}>Banner image link (optional)</span>
-        <div className="relative">
-          <ImagePlus className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-soft" />
-          <input
-            type="url"
-            value={imageUrl}
-            onChange={(event) => setImageUrl(event.target.value)}
-            placeholder="https://…"
-            className={`${field} pl-9`}
-          />
-        </div>
-      </label>
+      <div className="mt-4">
+        <span className={labelClass}>Photo (optional)</span>
+        <input
+          ref={photoInput}
+          type="file"
+          accept="image/*"
+          onChange={pickPhoto}
+          className="hidden"
+        />
+        {preview ? (
+          <div className="relative mt-1.5 overflow-hidden rounded-xl border border-border/70">
+            <img
+              src={preview}
+              alt="The photo on this offer"
+              className="h-32 w-full object-cover"
+            />
+            <button
+              type="button"
+              onClick={() => {
+                setImageUrl("");
+                setPreview(null);
+              }}
+              aria-label="Remove photo"
+              className="absolute right-2 top-2 rounded-full bg-background/90 p-1.5 text-foreground shadow-sm hover:bg-background"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => photoInput.current?.click()}
+            disabled={photoBusy}
+            className="mt-1.5 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-background py-4 font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft transition-colors hover:border-walnut/40 hover:text-foreground disabled:opacity-60"
+          >
+            {photoBusy ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <ImagePlus className="h-4 w-4" />
+            )}
+            {photoBusy ? "Adding…" : "Add a photo"}
+          </button>
+        )}
+      </div>
 
       <label className="mt-4 flex items-center gap-2.5 rounded-xl bg-sand px-3.5 py-3">
         <input
