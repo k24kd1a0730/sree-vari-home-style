@@ -11,5 +11,5 @@
 - [x] Owner: sign-in, offer form, live/expired offer list, publish/unpublish, delete
 - [x] Route metadata for home, catalogue, offers, product, owner
 - [x] End-to-end check in preview as owner and as visitor (temp login created, used, removed)
-- [ ] Owner offer form: pick a photo from the phone instead of pasting a link
+- [x] Owner offer form: pick a photo from the phone instead of pasting a link
 - [ ] Replace sample products, prices and offers with the shop's real pieces
