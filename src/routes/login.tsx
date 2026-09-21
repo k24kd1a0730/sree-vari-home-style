@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { KeyRound, ShieldCheck } from "lucide-react";
@@ -66,6 +66,12 @@ function LoginPage() {
       setBusy(false);
     }
   }
+
+  // This screen is browser-only (ssr: false), so render nothing on the first
+  // client paint to match what the server sent, then reveal the form.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  if (!mounted) return null;
 
   return (
     <div className="min-h-screen bg-sand-deep/50 sm:py-6">
