@@ -30,6 +30,46 @@ export function publicClient() {
 
 type SupabaseClient = ReturnType<typeof publicClient>;
 
+const STORAGE_PREFIX = "storage://";
+const PHOTO_LINK_SECONDS = 6 * 60 * 60;
+
+/**
+ * Offer photos live in Cloud storage. Browsers can't show a stored file
+ * directly, so swap the stored reference for a time-limited link. Anything
+ * that already looks like a normal link (or a bundled picture name) is
+ * handed back untouched.
+ */
+export async function resolveStoredImage(
+  supabase: SupabaseClient,
+  value: string | null,
+): Promise<string | null> {
+  if (!value?.startsWith(STORAGE_PREFIX)) return value;
+
+  const stored = value.slice(STORAGE_PREFIX.length);
+  const slash = stored.indexOf("/");
+  if (slash === -1) return null;
+
+  const bucket = stored.slice(0, slash);
+  const path = stored.slice(slash + 1);
+  const { data, error } = await supabase.storage
+    .from(bucket)
+    .createSignedUrl(path, PHOTO_LINK_SECONDS);
+
+  return error ? null : (data?.signedUrl ?? null);
+}
+
+async function signImages<T extends { image_url: string | null }>(
+  supabase: SupabaseClient,
+  rows: T[],
+): Promise<T[]> {
+  return Promise.all(
+    rows.map(async (row) => ({
+      ...row,
+      image_url: await resolveStoredImage(supabase, row.image_url),
+    })),
+  );
+}
+
 interface RawCategory {
   id: string;
   name: string;
@@ -150,7 +190,7 @@ export async function readCatalogBundle(
     if (result.error) throw new Error(result.error.message);
   }
 
-  return {
+  const catalog = {
     categories: ((categories.data ?? []) as unknown as RawCategory[]).map(mapCategory),
     products: ((products.data ?? []) as unknown as RawProduct[]).map(mapProduct),
     offers: attachLinks(
@@ -158,6 +198,12 @@ export async function readCatalogBundle(
       (offerCategories.data ?? []) as unknown as RawOfferCategoryLink[],
       (offerProducts.data ?? []) as unknown as RawOfferProductLink[],
     ),
+  };
+
+  return {
+    categories: catalog.categories,
+    products: await signImages(supabase, catalog.products),
+    offers: await signImages(supabase, catalog.offers),
   };
 }
 
@@ -177,10 +223,13 @@ export async function readOwnerBundle(supabase: SupabaseClient): Promise<OwnerBu
 
   return {
     ...bundle,
-    allOffers: attachLinks(
-      ((offers.data ?? []) as unknown as RawOffer[]).map(mapOffer),
-      links.offerCategories,
-      links.offerProducts,
+    allOffers: await signImages(
+      supabase,
+      attachLinks(
+        ((offers.data ?? []) as unknown as RawOffer[]).map(mapOffer),
+        links.offerCategories,
+        links.offerProducts,
+      ),
     ),
   };
 }
