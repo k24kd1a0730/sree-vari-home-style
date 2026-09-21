@@ -135,11 +135,11 @@ function RootComponent() {
 
   useEffect(() => {
     const { data } = supabase.auth.onAuthStateChange((event) => {
-      if (
-        event !== "SIGNED_IN" &&
-        event !== "SIGNED_OUT" &&
-        event !== "USER_UPDATED"
-      ) {
+      if (event !== "SIGNED_OUT" && event !== "USER_UPDATED") {
+        // SIGNED_IN also fires while the browser restores a stored session on
+        // page load. Invalidating there re-suspends the page that is still
+        // hydrating. Sign-in screens fetch their own data after navigating,
+        // so there is nothing to refresh here.
         return;
       }
       router.invalidate();
